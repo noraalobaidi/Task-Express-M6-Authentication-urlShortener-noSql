@@ -1,11 +1,21 @@
 const express = require('express');
 
 const router = express.Router();
+const passport = require('passport');
 
-const { shorten, redirect, deleteUrl } = require('./urls.controllers');
+const { shorten, redirect, deleteUrl, getUrls } = require('./urls.controllers');
 
-router.post('/shorten/:userId', shorten);
+router.post(
+  '/shorten',
+  passport.authenticate('jwt', { session: false }),
+  shorten
+);
 router.get('/:code', redirect);
-router.delete('/:code', deleteUrl);
+router.get('/', getUrls);
+router.delete(
+  '/:code',
+  passport.authenticate('jwt', { session: false }),
+  deleteUrl
+);
 
 module.exports = router;

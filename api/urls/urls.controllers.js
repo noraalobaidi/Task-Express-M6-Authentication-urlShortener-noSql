@@ -10,8 +10,9 @@ exports.shorten = async (req, res) => {
   try {
     req.body.shortUrl = baseUrl + '/' + urlCode;
     req.body.urlCode = urlCode;
+    req.body.userId = req.user._id;
     const newUrl = await Url.create(req.body);
-    await User.findByIdAndUpdate(req.params.userId, {
+    await User.findByIdAndUpdate(req.user._id, {
       $push: { urls: newUrl._id },
     });
     res.json(newUrl);
@@ -33,10 +34,22 @@ exports.redirect = async (req, res) => {
   }
 };
 
+exports.getUrls = async (req, res) => {
+  try {
+    const url = await Url.find();
+    res.status(200).json(url);
+  } catch (err) {
+    res.status(500).json('Server Error');
+  }
+};
+
 exports.deleteUrl = async (req, res) => {
   try {
     const url = await Url.findOne({ urlCode: req.params.code });
     if (url) {
+      if (url.userId != req.user.id) {
+        return res.status(401).json('UnAuthorized');
+      }
       await Url.findByIdAndDelete(url._id);
       return res.status(201).json('Deleted');
     } else {
